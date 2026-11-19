@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d6efd" />
+  <title>Aplikasi Web Saya</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f8fafc;
+      color: #0f172a;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      max-width: 480px;
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      text-align: center;
+    }
+    button {
+      background: #0d6efd;
+      color: #fff;
+      border: 0;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button[hidden] { display: none; }
+    .status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Aplikasi Web Saya</h1>
+    <p>Halaman ini sudah dikonfigurasi sebagai PWA agar bisa diinstal di HP maupun laptop setelah diunggah ke Netlify Drop.</p>
+    <button id="installBtn" hidden>Instal Aplikasi</button>
+    <div class="status" id="statusText">Memeriksa dukungan instalasi...</div>
+  </div>
+
+  <script>
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    const statusText = document.getElementById('statusText');
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => {
+            statusText.textContent = 'Service Worker aktif. Jika tombol instal belum muncul, gunakan menu browser ("Add to Home Screen" / "Install App").';
+          })
+          .catch(() => {
+            statusText.textContent = 'Gagal mengaktifkan Service Worker.';
+          });
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.hidden = false;
+      statusText.textContent = 'Aplikasi siap diinstal!';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      statusText.textContent = outcome === 'accepted'
+        ? 'Aplikasi berhasil diinstal!'
+        : 'Instalasi dibatalkan.';
+      deferredPrompt = null;
+      installBtn.hidden = true;
+    });
+  </script>
+</body>
+</html>
